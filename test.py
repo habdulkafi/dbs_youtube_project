@@ -44,9 +44,15 @@ for channel in results["items"]:
 	channeldesc = chresults["items"][0]["snippet"]["description"].replace("'","")
 	channelviewcount = chresults["items"][0]["statistics"]["viewCount"]
 	# q = "INSERT INTO channel (c_id, c_title, c_description, c_view_count, c_sub_count) VALUES ('" + channelId + "','" + channeltitle + "','" + channeldesc + "'," + str(channelviewcount) + "," + str(channelsubcount) + ")" 
-	q = "INSERT INTO channel (c_id, c_title, c_description, c_view_count, c_sub_count) SELECT '{0}' ,'{1}','{2}',{3},{4} FROM channel WHERE NOT EXISTS (SELECT 1 FROM channel where c_id = '{0}')".format(channelId,channeltitle,channeldesc,str(channelviewcount),str(channelsubcount)) 
+	q = "INSERT INTO channel (c_id, c_title, c_description, c_view_count, c_sub_count) SELECT '{0}' ,'{1}','{2}',{3},{4} FROM channel WHERE NOT EXISTS (SELECT 1 FROM channel WHERE c_id = '{0}')".format(channelId,channeltitle,channeldesc,str(channelviewcount),str(channelsubcount)) 
 	cur.execute(q)
-
+	thumdict = chresults["items"][0]["snippet"]["thumbnails"]
+	for size in thumdict:
+		thumurl = thumdict[size]
+		q = "INSERT INTO Thumbnail (t_url, t_width, t_height) SELECT '{0}',{1},{2} FROM Thumbnail WHERE NOT EXISTS (SELECT 1 FROM Thumbnail WHERE t_url = '{0}'".format(thumurl,str(0),str(0))
+		cur.execute(q)
+		q = "INSERT INTO has_thumb_2 (t_url,c_id) SELECT '{0}','{1}' FROM has_thumb_2 WHERE NOT EXISTS (SELECT 1 FROM has_thumb_2 WHERE t_url = '{0}'".format(thumurl,channelId)
+		cur.execute(q)
 
 
 # df = pandas.read_sql("SELECT * FROM video",con=engine)
