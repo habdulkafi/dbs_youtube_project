@@ -18,24 +18,6 @@ youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=DEVE
 
 results = youtube.subscriptions().list(part="snippet", maxResults=10, channelId="UCUbh6T8Nr6ss7JWsq-3xYQg").execute()
 
-# for ch in list(df.channelId):
-# 	results = youtube.channels().list(part="contentDetails",id=ch).execute()
-# 	playlistId = results["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
-# 	results = youtube.playlistItems().list(part="snippet",playlistId=playlistId).execute()
-# 	for item in results["items"]:
-# 		videoId = item["snippet"]["resourceId"]["videoId"]
-# 		publishedAt = item["snippet"]["publishedAt"]
-# 		title = item["snippet"]["title"].replace('"','')
-# 		description = item["snippet"]["description"]
-# 		channelTitle = item["snippet"]["channelTitle"]
-# 		channelId = item["snippet"]["channelId"]
-# 		# print videoId
-# 		q = 'INSERT INTO videos (title, videoId, publishedAt, channelTitle, channelId)  SELECT "' + title + '","' + videoId + '","' + publishedAt + '","' + channelTitle + '","' + channelId + '" FROM dual WHERE NOT EXISTS (SELECT * FROM videos WHERE videoId = "' + videoId + '" );' 
-# 		# print q
-# 		q = q.encode("ascii","ignore")
-# 		cur.execute(q)
-# 		db.commit()
-
 for channel in results["items"]:
 	channelId = channel["snippet"]["resourceId"]["channelId"]
 	chresults = youtube.channels().list(part="snippet,contentDetails,statistics",id=channelId).execute()
@@ -53,7 +35,7 @@ for channel in results["items"]:
 		cur.execute(q)
 		q = "INSERT INTO has_thumb_2 (t_url,c_id) SELECT '{0}','{1}' WHERE NOT EXISTS (SELECT 1 FROM has_thumb_2 WHERE t_url = '{0}')".format(thumurl,channelId)
 		cur.execute(q)
-		print size, channelId
+		# print size, channelId
 
 
 # df = pandas.read_sql("SELECT * FROM video",con=engine)
