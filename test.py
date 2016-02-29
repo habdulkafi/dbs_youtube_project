@@ -36,7 +36,7 @@ results = youtube.subscriptions().list(part="snippet", maxResults=10, channelId=
 # 		cur.execute(q)
 # 		db.commit()
 
-for channel in results["items"]:
+for channel in results["items"][1:]:
 	channelId = channel["snippet"]["resourceId"]["channelId"]
 	chresults = youtube.channels().list(part="snippet,contentDetails,statistics",id=channelId).execute()
 	channeltitle = chresults["items"][0]["snippet"]["title"]
