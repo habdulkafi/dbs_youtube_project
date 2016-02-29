@@ -49,7 +49,7 @@ for channel in results["items"]:
 	thumdict = chresults["items"][0]["snippet"]["thumbnails"]
 	for size in thumdict:
 		thumurl = thumdict[size]['url']
-		q = "INSERT INTO Thumbnail (t_url, t_width, t_height) SELECT '{0}',{1},{2} FROM Thumbnail WHERE NOT EXISTS (SELECT 1 FROM Thumbnail WHERE t_url = '{0}')".format(thumurl,str(0),str(0))
+		q = "INSERT INTO Thumbnail (t_url, t_width, t_height) SELECT '{0}',{1},{2} FROM Thumbnail WHERE NOT EXISTS (SELECT 1 FROM Thumbnail WHERE t_url = '{0}')".format(thumurl,str(1),str(1))
 		cur.execute(q)
 		q = "INSERT INTO has_thumb_2 (t_url,c_id) SELECT '{0}','{1}' FROM has_thumb_2 WHERE NOT EXISTS (SELECT 1 FROM has_thumb_2 WHERE t_url = '{0}')".format(thumurl,channelId)
 		cur.execute(q)
