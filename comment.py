@@ -28,4 +28,3 @@ for comm in results["items"]:
 	q = "INSERT INTO comment (com_id,video_id,text,com_date,display_name, profile_img,like_count) SELECT '{0}','{1}','{2}','{3}','{4}','{5}',{6} WHERE NOT EXISTS (SELECT 1 FROM comment WHERE com_id = '{0}')".format(commentId,videoId,commentText,commentDate,commentorName,commentorImage,commentLikes)
 	cur.execute(q)
 
-
