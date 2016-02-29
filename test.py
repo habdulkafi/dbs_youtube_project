@@ -41,7 +41,7 @@ for channel in results["items"][4:]:
 	chresults = youtube.channels().list(part="snippet,contentDetails,statistics",id=channelId).execute()
 	channeltitle = chresults["items"][0]["snippet"]["title"]
 	channelsubcount = chresults["items"][0]["statistics"]["subscriberCount"]
-	channeldesc = chresults["items"][0]["snippet"]["description"].replace("'","\'")
+	channeldesc = chresults["items"][0]["snippet"]["description"].replace("'","")
 	channelviewcount = chresults["items"][0]["statistics"]["viewCount"]
 	q = "INSERT INTO channel VALUES ('" + channelId + "','" + channeltitle + "','" + channeldesc + "'," + str(channelviewcount) + "," + str(channelsubcount) + ")" 
 	cur.execute(q)
