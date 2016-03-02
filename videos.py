@@ -21,26 +21,40 @@ for ch in c_id:
 	results = youtube.channels().list(part="contentDetails",id=ch).execute()
 	playlistId = results["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
 	results = youtube.playlistItems().list(part="snippet",playlistId=playlistId).execute()
-	for item in results["items"]:
+	all_res = results["items"]
+	while len(all_res) < results["pageInfo"]["totalResults"]:
+		print len(all_res)
+		results = youtube.playlistItems().list(part="snippet",maxResults=50,pageToken=results["nextPageToken"],playlistId=playlistId).execute()
+		all_res += results["items"]
+	for vid in all_res:
 		# insert into video table
-		video_id = item["snippet"]["resourceId"]["videoId"]
-		results = youtube.videos().list(part="snippet,contentDetails,player,statistics",id=video_id).execute()
-		results = results["items"][0]
-		title = results["snippet"]["title"].replace("'","").replace("%","").encode('utf-8')
-		description = results["snippet"]["description"].replace("'","").replace("%","").encode('utf-8')
-		publishedAt = results["snippet"]["publishedAt"]
-		length = results["contentDetails"]["duration"]
-		embed_code = results["player"]["embedHtml"]
-		view_count = results["statistics"]["viewCount"]
-		like_count = results["statistics"]["likeCount"]
-		dislike_count = results["statistics"]["dislikeCount"]
+		video_id = vid["snippet"]["resourceId"]["videoId"]
+		vresults = youtube.videos().list(part="snippet,contentDetails,player,statistics",id=video_id).execute()
+		vresults = vresults["items"][0]
+		title = vresults["snippet"]["title"].replace("'","").replace("%","").encode('utf-8')
+		description = vresults["snippet"]["description"].replace("'","").replace("%","").encode('utf-8')
+		publishedAt = vresults["snippet"]["publishedAt"]
+		length = vresults["contentDetails"]["duration"]
+		embed_code = vresults["player"]["embedHtml"]
+		view_count = vresults["statistics"]["viewCount"]
+		like_count = vresults["statistics"]["likeCount"]
+		dislike_count = vresults["statistics"]["dislikeCount"]
 		q = "INSERT INTO Video SELECT '{0}','{1}','{2}','{3}','{4}','{5}','{6}',{7},{8},{9} WHERE NOT EXISTS (SELECT 1 FROM Video WHERE video_id = '{0}')".format(video_id,ch,title,description,publishedAt,length,embed_code,str(view_count),str(like_count),str(dislike_count)) 
 		#(video_id,channel_id,title,description,date,length,embed_code,view_count,like_count,dislike_count)
 		cur.execute(q)
+		thumdict = vresults["snippet"]["thumbnails"]
+		for size in thumdict:
+			thumurl = thumdict[size]['url']
+			width = thumdict[size]['height']
+			height = thumdict[size]['height']
+			q = "INSERT INTO Thumbnail (t_url, t_width, t_height) SELECT '{0}',{1},{2} WHERE NOT EXISTS (SELECT 1 FROM Thumbnail WHERE t_url = '{0}')".format(thumurl,str(width),str(height))
+			cur.execute(q)
+			q = "INSERT INTO has_thumb_1 (t_url,video_id) SELECT '{0}','{1}' WHERE NOT EXISTS (SELECT 1 FROM has_thumb_2 WHERE t_url = '{0}')".format(thumurl,video_id)
+			cur.execute(q)
 
 		# insert into comment table
-		results = youtube.commentThreads().list(part="snippet",maxResults=10,videoId=video_id).execute()
-		for comm in results["items"]:
+		cresults = youtube.commentThreads().list(part="snippet",maxResults=10,videoId=video_id).execute()
+		for comm in cresults["items"]:
 			commentId = comm["snippet"]["topLevelComment"]["id"]
 			commentLikes = comm["snippet"]["topLevelComment"]["snippet"]["likeCount"]
 			commentorImage = comm["snippet"]["topLevelComment"]["snippet"]["authorProfileImageUrl"]
