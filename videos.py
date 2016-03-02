@@ -22,7 +22,7 @@ for ch in c_id:
 	playlistId = results["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
 	results = youtube.playlistItems().list(part="snippet",playlistId=playlistId).execute()
 	all_res = results["items"]
-	while len(all_res) < results["pageInfo"]["totalResults"]:
+	while (len(all_res) < results["pageInfo"]["totalResults"]) and ("nextPageToken" in results.keys()):
 		print len(all_res)
 		results = youtube.playlistItems().list(part="snippet",maxResults=50,pageToken=results["nextPageToken"],playlistId=playlistId).execute()
 		all_res += results["items"]
