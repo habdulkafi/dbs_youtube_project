@@ -49,7 +49,7 @@ for ch in c_id:
 			height = thumdict[size]['height']
 			q = "INSERT INTO Thumbnail (t_url, t_width, t_height) SELECT '{0}',{1},{2} WHERE NOT EXISTS (SELECT 1 FROM Thumbnail WHERE t_url = '{0}')".format(thumurl,str(width),str(height))
 			cur.execute(q)
-			q = "INSERT INTO has_thumb_1 (t_url,video_id) SELECT '{0}','{1}' WHERE NOT EXISTS (SELECT 1 FROM has_thumb_2 WHERE t_url = '{0}')".format(thumurl,video_id)
+			q = "INSERT INTO has_thumb_1 (t_url,video_id) SELECT '{0}','{1}' WHERE NOT EXISTS (SELECT 1 FROM has_thumb_1 WHERE t_url = '{0}' AND video_id = '{1}')".format(thumurl,video_id)
 			cur.execute(q)
 
 		# insert into comment table
