@@ -18,7 +18,7 @@ df = pandas.read_sql("SELECT * FROM channel",con=engine.raw_connection())
 
 c_id = df["c_id"]
 
-for ch in c_id[5:]:
+for ch in c_id:
 	results = youtube.channels().list(part="contentDetails",id=ch).execute()
 	playlistId = results["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
 	results = youtube.playlistItems().list(part="snippet",playlistId=playlistId).execute()

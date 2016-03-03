@@ -18,7 +18,7 @@ df = pandas.read_sql("SELECT * FROM channel",con=engine.raw_connection())
 
 c_id = df["c_id"]
 
-for ch in c_id[5:]:
+for ch in c_id[:5]:
 	results = youtube.channels().list(part="contentDetails",id=ch).execute()
 	playlists = results["items"][0]["contentDetails"]["relatedPlaylists"].keys()
 	if "likes" in playlists:
