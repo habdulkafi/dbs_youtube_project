@@ -44,6 +44,8 @@ for ch in c_id[5:]:
 			q = "INSERT INTO Video SELECT '{0}','{1}','{2}','{3}','{4}','{5}','{6}',{7},{8},{9} WHERE NOT EXISTS (SELECT 1 FROM Video WHERE video_id = '{0}')".format(video_id,ch,title,description,publishedAt,length,embed_code,str(view_count),str(like_count),str(dislike_count)) 
 			#(video_id,channel_id,title,description,date,length,embed_code,view_count,like_count,dislike_count)
 			cur.execute(q)
+			q = "INSERT INTO uploaded_by (video_id, c_id) SELECT '{0}','{1}' WHERE NOT EXISTS (SELECT 1 FROM uploaded_by WHERE video_id = '{0}' AND c_id = '{1}')".format(video_id,ch)
+			cur.execute(q)
 			thumdict = vresults["snippet"]["thumbnails"]
 			for size in thumdict:
 				thumurl = thumdict[size]['url']
