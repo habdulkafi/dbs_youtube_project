@@ -43,7 +43,7 @@ for ch in c_id[5:]:
 				view_count = vresults["statistics"]["viewCount"]
 				like_count = vresults["statistics"]["likeCount"]
 				dislike_count = vresults["statistics"]["dislikeCount"]
-				upload_channel = vresults["items"][0]["snippet"]["channelId"]
+				upload_channel = vresults["snippet"]["channelId"]
 				q = "INSERT INTO Video SELECT '{0}','{1}','{2}','{3}','{4}','{5}','{6}',{7},{8},{9} WHERE NOT EXISTS (SELECT 1 FROM Video WHERE video_id = '{0}')".format(video_id,upload_channel,title,description,publishedAt,length,embed_code,str(view_count),str(like_count),str(dislike_count)) 
 				#(video_id,channel_id,title,description,date,length,embed_code,view_count,like_count,dislike_count)
 				cur.execute(q)
