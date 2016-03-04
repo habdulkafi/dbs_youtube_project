@@ -23,6 +23,7 @@ for ch in c_id:
 	playlists = results["items"][0]["contentDetails"]["relatedPlaylists"].keys()
 	if "favorites" in playlists:
 		playlistId = results["items"][0]["contentDetails"]["relatedPlaylists"]["favorites"]
+		print playlistId
 		results = youtube.playlistItems().list(part="snippet",playlistId=playlistId).execute()
 		all_res = results["items"]
 		while (len(all_res) < results["pageInfo"]["totalResults"]) and ("nextPageToken" in results.keys()):
