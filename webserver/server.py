@@ -17,11 +17,13 @@ Read about it online.
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
+from sqlalchemy.sql import text
 from flask import Flask, request, render_template, g, redirect, Response
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
-
+app.debug = True
+# PROPAGATE_EXCEPTIONS = True
 
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
@@ -173,6 +175,39 @@ def add():
   name = request.form['name']
   g.conn.execute('INSERT INTO test VALUES (NULL, ?)', name)
   return redirect('/')
+
+
+@app.route('/video/<videoId>')
+def video(videoId):
+  print request.args
+
+  print type(videoId)
+  #
+  # example of a database query
+  #
+  # cursor = g.conn.execute("SELECT name FROM test")
+  # try:  
+  # cursor = g.conn.execute("SELECT * FROM video WHERE video_id = '3dhKRWB1_IA'")
+  # cursor = g.conn.execute("SELECT * FROM video WHERE video_id = '{0}'".format(videoId))
+  # print "SELECT * FROM video WHERE video_id = '{0}'".format(videoId)
+  # cursor = g.conn.execute("SELECT * FROM video limit 5")
+  s = text("SELECT * FROM video WHERE video_id = :x")
+  cursor = g.conn.execute(s,x=videoId)
+  vidobj = list(cursor)[0]
+  # print "197"
+  names = []
+  # for result in cursor:
+  #   names.append(result['video_id'])  # can also be accessed using result[0]
+  names.append(vidobj['video_id'])
+  print names
+  vidtitle = vidobj['title']
+  embed = vidobj['embed_code']
+  numlikes = vidobj['like_count']
+  cursor.close()
+  print names
+  context = dict(data = names,title=vidtitle,embhtml=embed,likes=numlikes)
+  return render_template("video.html", **context)
+
 
 
 @app.route('/login')
