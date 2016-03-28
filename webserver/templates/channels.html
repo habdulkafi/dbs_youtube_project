@@ -1,0 +1,35 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1> Channels </h1>
+  {% for ch in allch %}
+  <a href={{ch.cid|safe}}>{{ch.ctitle}}</a>
+  {% endfor %}
+
+  <!-- <h1>{{title}}</h1>
+  {% for thumb in thumbs %}
+  <img src={{thumb|safe}}>
+  {% endfor %}
+  <div> Views: {{views}} </div>
+  <div> Likes: {{likes}} </div>
+  <div> Subs: {{subs}} </div>
+  <p> {{desc|safe}} </p>
+  {% for vid in top %}
+  <a href={{vid.vid|safe}}>{{vid.title}}</a>
+  {% endfor %} -->
+
+</body>
+
+
+</html>
+<!-- {% for com in comments %}
+    <b>{{com.name}}</b> {{com.date}} Likes: {{com.likes}}
+    <div>{{com.text|safe}}</div>
+    {% endfor %} -->

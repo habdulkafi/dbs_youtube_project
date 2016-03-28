@@ -186,6 +186,10 @@ def video(videoId):
   embed = vidobj['embed_code']
   numlikes = vidobj['like_count']
   numdislikes = vidobj['dislike_count']
+  views = vidobj["view_count"]
+  desc = vidobj["description"]
+  date = vidobj["date"]
+  cid = vidobj["channel_id"]
   cursor.close()
   s2 = text("SELECT * FROM comment WHERE video_id = :x")
   cursor = g.conn.execute(s2,x=videoId)
@@ -196,12 +200,31 @@ def video(videoId):
     allcomms.append(comdict)
   cursor.close()
 
-
-
-
   context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
-    dislikes = numdislikes,comments = allcomms)
+    dislikes = numdislikes,comments = allcomms,views = views,
+    desc = desc, date = date, cid = "../channel/" + cid)
   return render_template("video.html", **context)
+
+
+
+@app.route('/channel/')
+def channels():
+  s = text("SELECT * FROM channel")
+  cursor = g.conn.execute(s)
+  allch = []
+  for ch in cursor:
+    allch.append(dict(cid =  ch["c_id"],ctitle = ch["c_title"],
+      cdesc = ch["c_description"],cviews = ch["c_view_count"],
+      subs = ch["c_sub_count"]))
+  cursor.close()
+  context = dict(allch = allch)
+  return render_template("channels.html", **context)
+
+
+
+
+
+
 
 
 
