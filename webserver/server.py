@@ -34,7 +34,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #
 #     DATABASEURI = "postgresql://gravano:foobar@w4111a.eastus.cloudapp.azure.com/proj1part2"
 #
-DATABASEURI = "postgresql://user:password@w4111a.eastus.cloudapp.azure.com/proj1part2"
+DATABASEURI = "postgresql://ql2257:3368@w4111a.eastus.cloudapp.azure.com/proj1part2"
 
 
 #
@@ -188,7 +188,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=8111, type=int)
+  @click.argument('PORT', default=5001, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
