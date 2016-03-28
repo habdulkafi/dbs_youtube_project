@@ -263,6 +263,92 @@ def channel(channelId):
   context = dict(title=chtitle,views=views,subs = subs,desc = desc,thumbs = thumbs,likes = likes,top = top_vids )
   return render_template("channel.html", **context)
 
+
+
+@app.route('/user/<int:userId>')
+def users(userId):
+  print request.args
+  print userId
+  print type(userId)
+  #
+  # example of a database query
+  #
+  # cursor = g.conn.execute("SELECT name FROM test")
+  # try:  
+  # cursor = g.conn.execute("SELECT * FROM video WHERE video_id = '3dhKRWB1_IA'")
+  # cursor = g.conn.execute("SELECT * FROM video WHERE video_id = '{0}'".format(videoId))
+  # print "SELECT * FROM video WHERE video_id = '{0}'".format(videoId)
+  # cursor = g.conn.execute("SELECT * FROM video limit 5")
+  s = text("SELECT * FROM users WHERE user_id = :x")
+  cursor = g.conn.execute(s,x=userId)
+  userobj = list(cursor)[0]
+  # print "197"
+  # for result in cursor:
+  #   names.append(result['video_id'])  # can also be accessed using result[0]
+  username = userobj['username']
+  cursor.close()
+  #print username
+
+  prof_pic = text("SELECT * FROM prof_pic WHERE user_id = :x")
+  cursor = g.conn.execute(prof_pic, x=userId)
+  prof_obj = list(cursor)[0]
+  prof_url = prof_obj['t_url']
+  cursor.close()
+
+  likes_1 = text("SELECT * FROM likes_1 WHERE user_id = :x")
+  cursor = g.conn.execute(likes_1, x=userId)
+  likevidobj = list(cursor)[0]
+  likevid = []
+  likevid.append(likevidobj['video_id'])
+  cursor.close()
+  #print likevid
+
+  likevideos = []
+  for vid in likevid:
+    like_vtab = text("SELECT * FROM video WHERE video_id = :x")
+    cursor = g.conn.execute(like_vtab, x=vid)
+    like_vtabobj = list(cursor)[0]
+    likevideos.append(dict(vid = "../video/" + vid, title = like_vtabobj['title']))
+    cursor.close()
+
+  skips = text("SELECT * FROM skips WHERE user_id = :x")
+  cursor = g.conn.execute(skips, x=userId)
+  skipvidobj = list(cursor)[0]
+  skipvid = []
+  skipvid.append(skipvidobj['video_id'])
+  cursor.close()
+  #print skipvid
+
+  skipvideos = []
+  for vid in skipvid:
+    skip_vtab = text("SELECT * FROM video WHERE video_id = :x")
+    cursor = g.conn.execute(skip_vtab, x=vid)
+    skip_vtabobj = list(cursor)[0]
+    skipvideos.append(dict(vid = "../video/" + vid, title = skip_vtabobj['title']))
+    cursor.close()
+
+  watched = text("SELECT * FROM watched WHERE user_id = :x")
+  cursor = g.conn.execute(watched, x=userId)
+  watvidobj = list(cursor)[0]
+  watvid = []
+  watvid.append(watvidobj['video_id'])
+  cursor.close()
+  #print watvid
+
+  watvideos = []
+  for vid in watvid:
+    wat_vtab = text("SELECT * FROM video WHERE video_id = :x")
+    cursor = g.conn.execute(wat_vtab, x=vid)
+    wat_vtabobj = list(cursor)[0]
+    watvideos.append(dict(vid = "../video/" + vid, title = wat_vtabobj['title']))
+    cursor.close()
+
+  #context = dict(username=username, userid=userId, likevid=likevid, skipvid=skipvid, watvid=watvid)
+  context = dict(username=username, profurl=prof_url, userid=userId, likevideos=likevideos, skipvideos=skipvideos, watvideos=watvideos)
+  return render_template("user.html", **context)
+
+
+
 @app.route('/login')
 def login():
     abort(401)
