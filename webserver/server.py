@@ -179,36 +179,66 @@ def add():
 
 @app.route('/video/<videoId>')
 def video(videoId):
-  print request.args
-
-  print type(videoId)
-  #
-  # example of a database query
-  #
-  # cursor = g.conn.execute("SELECT name FROM test")
-  # try:  
-  # cursor = g.conn.execute("SELECT * FROM video WHERE video_id = '3dhKRWB1_IA'")
-  # cursor = g.conn.execute("SELECT * FROM video WHERE video_id = '{0}'".format(videoId))
-  # print "SELECT * FROM video WHERE video_id = '{0}'".format(videoId)
-  # cursor = g.conn.execute("SELECT * FROM video limit 5")
   s = text("SELECT * FROM video WHERE video_id = :x")
   cursor = g.conn.execute(s,x=videoId)
   vidobj = list(cursor)[0]
-  # print "197"
-  names = []
-  # for result in cursor:
-  #   names.append(result['video_id'])  # can also be accessed using result[0]
-  names.append(vidobj['video_id'])
-  print names
   vidtitle = vidobj['title']
   embed = vidobj['embed_code']
   numlikes = vidobj['like_count']
+  numdislikes = vidobj['dislike_count']
   cursor.close()
-  print names
-  context = dict(data = names,title=vidtitle,embhtml=embed,likes=numlikes)
+  s2 = text("SELECT * FROM comment WHERE video_id = :x")
+  cursor = g.conn.execute(s2,x=videoId)
+  allcomms = []
+  for comment in cursor:
+    comdict = dict(text=comment['text'],name=comment['display_name'],
+      date =comment["com_date"],likes = comment['like_count'])
+    allcomms.append(comdict)
+  cursor.close()
+
+
+
+
+  context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
+    dislikes = numdislikes,comments = allcomms)
   return render_template("video.html", **context)
 
 
+
+@app.route('/channel/<channelId>')
+def channel(channelId):
+
+  s = text("SELECT * FROM channel WHERE c_id = :x")
+  cursor = g.conn.execute(s,x=channelId)
+  chobj = list(cursor)[0]
+
+  chtitle = chobj['c_title']
+  desc = chobj['c_description']
+  views = chobj['c_view_count']
+  subs = chobj['c_sub_count']
+  cursor.close()
+
+  s2 = text("select * from thumbnail t where t.t_url in (select ht2.t_url from has_thumb_2 ht2 where c_id = :x)" )
+  cursor = g.conn.execute(s2,x=channelId)
+  thumbs = []
+  for thumb in cursor:
+    thumbs.append(thumb['t_url'])
+  cursor.close()
+
+  s3 = text("SELECT SUM(like_count) AS total_likes FROM video v, uploaded_by ub WHERE v.video_id = ub.video_id AND ub.c_id = :x GROUP BY ub.c_id")
+  cursor = g.conn.execute(s3,x=channelId)
+  likes = list(cursor)[0][0]
+  cursor.close()
+
+  s4 = text("select v.video_id, v.title from uploaded_by ub, video v where ub.video_id = v.video_id and ub.c_id = :x order by v.view_count desc limit 5")
+  cursor = g.conn.execute(s4,x=channelId)
+  # top_vids = [i[0] for i in list(cursor)]
+  top_vids = []
+  for vid in cursor:
+    top_vids.append(dict(vid = "../video/" + vid["video_id"],title = vid["title"]))
+  cursor.close()
+  context = dict(title=chtitle,views=views,subs = subs,desc = desc,thumbs = thumbs,likes = likes,top = top_vids )
+  return render_template("channel.html", **context)
 
 @app.route('/login')
 def login():
@@ -239,6 +269,7 @@ if __name__ == "__main__":
 
     HOST, PORT = host, port
     print "running on %s:%d" % (HOST, PORT)
+    app.debug=True
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
 

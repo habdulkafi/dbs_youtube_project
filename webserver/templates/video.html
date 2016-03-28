@@ -9,10 +9,16 @@
 
 <body>
   <h1>{{title}}</h1>
-  <div>{{data}}</div>
   {{embhtml|safe}}
-  <div> Number Of Likes: {{likes}} </div>
-
+  <div> Number Of Likes: {{likes}}         Number Of Disikes: {{dislikes}} </div>
+  <!-- <div>  </div> -->
+  <h2>Comments:</h2>
+  <!-- <div> -->
+    {% for com in comments %}
+    <b>{{com.name}}</b> {{com.date}} Likes: {{com.likes}}
+    <div>{{com.text|safe}}</div>
+    {% endfor %}
+  <!-- </div> -->
 <!--   <div>
     {% for n in data %}
     <div>{{n}}</div>
