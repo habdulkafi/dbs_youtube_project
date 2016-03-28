@@ -1,0 +1,45 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>{{username}}</h1>
+  <img src={{profurl|safe}} style="width:128px;height:128px;">
+  <div>User ID: {{userid}}</div>
+  <!-- <div> Liked Videos: {{likevname}} </div>
+  <div> Skipped Videos: {{skipvname}} </div>
+  <div> Watched Videos: {{watvname}} </div> -->
+  <div>Liked Videos: </div>
+  {% for vid in likevideos %}
+  <a href={{vid.vid|safe}}>{{vid.title}}</a>
+  {% endfor %}
+  <div>Skipped Videos: </div>
+  {% for vid in skipvideos %}
+  <a href={{vid.vid|safe}}>{{vid.title}}</a>
+  {% endfor %}
+  <div>Watched Videos: </div>
+  {% for vid in watvideos %}
+  <a href={{vid.vid|safe}}>{{vid.title}}</a>
+  {% endfor %}
+
+<!--   <div>
+    {% for n in data %}
+    <div>{{n}}</div>
+    {% endfor %}
+  </div> -->
+
+<!-- <p><a href="another.html">Go to the other page</a></p> -->
+
+<!-- <form method="POST" action="/add">
+<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
+</form> -->
+
+</body>
+
+
+</html>
