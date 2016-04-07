@@ -314,7 +314,7 @@ def users(userId):
     like_vtab = text("SELECT * FROM video WHERE video_id = :x")
     cursor = g.conn.execute(like_vtab, x=vid)
     like_vtabobj = list(cursor)[0]
-    likevideos.append(dict(vid = "../video/" + vid, title = like_vtabobj['title']))
+    likevideos.append(dict(vid = "video/" + vid, title = like_vtabobj['title']))
     cursor.close()
 
   skips = text("SELECT * FROM skips WHERE user_id = :x")
@@ -331,7 +331,7 @@ def users(userId):
     skip_vtab = text("SELECT * FROM video WHERE video_id = :x")
     cursor = g.conn.execute(skip_vtab, x=vid)
     skip_vtabobj = list(cursor)[0]
-    skipvideos.append(dict(vid = "../video/" + vid, title = skip_vtabobj['title']))
+    skipvideos.append(dict(vid = "video/" + vid, title = skip_vtabobj['title']))
     cursor.close()
 
   watched = text("SELECT * FROM watched WHERE user_id = :x")
@@ -348,7 +348,7 @@ def users(userId):
     wat_vtab = text("SELECT * FROM video WHERE video_id = :x")
     cursor = g.conn.execute(wat_vtab, x=vid)
     wat_vtabobj = list(cursor)[0]
-    watvideos.append(dict(vid = "../video/" + vid, title = wat_vtabobj['title']))
+    watvideos.append(dict(vid = "video/" + vid, title = wat_vtabobj['title']))
     cursor.close()
 
   #context = dict(username=username, userid=userId, likevid=likevid, skipvid=skipvid, watvid=watvid)
