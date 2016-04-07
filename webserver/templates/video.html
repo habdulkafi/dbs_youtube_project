@@ -4,21 +4,32 @@
       font-size: 15pt;
       font-family: arial;
     }
+    button{
+    height: 40px;
+    width: 40px;
+    border: 0;
+    margin-left: 200px;
+    background-size: 100%; /* To fill the dimensions of container (button), or */
+    background-size: 40px auto; /* to specify dimensions explicitly */
+    }
   </style>
 
 
 <body>
   <h1>{{title}}</h1>
   {{embhtml|safe}}
-  <button class="button like" value="like">Like</button>
-  <button class="button skip" value="skip">Skip</button>
-  <div> <input type="image" src="https://cdn3.iconfinder.com/data/icons/social-icons-5/606/Like.png" alt="Likes" style="width:40px;height:40px;vertical-align:middle" /> {{likes}} </div>
-  <div> <input type="image" src="https://cdn3.iconfinder.com/data/icons/social-icons-5/607/Dislike.png" alt="Dislikes" style="width:40px;height:40px;vertical-align:middle" /> {{dislikes}} </div>
-  <div> <input type="image" src="https://cdn2.iconfinder.com/data/icons/flat-ui-icons-24-px/24/eye-24-128.png" alt="Views" style="width:40px;height:40px;vertical-align:middle" /> {{views}} </div>
+  <p></p>
+  <button class="button like" value="like" style="background-image: url('https://cdn3.iconfinder.com/data/icons/medical-icons-4/100/heart-256.png')"></button>
+  <button class="button skip" value="skip" style="background-image: url('https://cdn4.iconfinder.com/data/icons/flat-black/512/next.png')"></button>
+  <div style="position:absolute;left:207px;"><span style="padding-right: 10.5em">Like</span>Skip</div>
+  <p></p>
+  <div> <img src="https://cdn3.iconfinder.com/data/icons/social-icons-5/606/Like.png" alt="Likes" style="width:40px;height:40px;vertical-align:middle;padding-bottom:5px"> {{likes}} </div>
+  <div> <img src="https://cdn3.iconfinder.com/data/icons/social-icons-5/607/Dislike.png" alt="Dislikes" style="width:40px;height:40px;vertical-align:middle"> {{dislikes}} </div>
+  <div> <img src="https://cdn2.iconfinder.com/data/icons/flat-ui-icons-24-px/24/eye-24-128.png" alt="Views" style="width:40px;height:40px;vertical-align:middle"> {{views}} </div>
   <p> {{desc|safe}} </p>
   <div> {{date}} </div>
   <p></p>
-  <a href={{cid|safe}}>Link to Channel</a>
+  <a href={{cid|safe}}><img src="https://cdn1.iconfinder.com/data/icons/folders-3/96/Folder-Video-512.png" alt="Channel" style="width:30px;height:30px;vertical-align:middle"> {{cname}}</a>
   <h2>Comments:</h2>
     {% for com in comments %}
     <b>{{com.name}}</b> {{com.date}} Likes: {{com.likes}}
@@ -70,7 +81,5 @@ addEventListener("DOMContentLoaded", function() {
   }
 }, true);
 </script>
-
-
 
 </html>

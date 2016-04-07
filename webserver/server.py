@@ -206,10 +206,17 @@ def video(userId, videoId):
       date =comment["com_date"],likes = comment['like_count'])
     allcomms.append(comdict)
   cursor.close()
+  try:
+    s4 = text("SELECT * FROM channel WHERE c_id = :x")
+    cursor = g.conn.execute(s4,x=cid)
+    cha = list(cursor)[0]
+    cname = cha['c_title']
+  except IndexError:
+    cname = []
 
   context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
     dislikes = numdislikes,comments = allcomms,views = views,
-    desc = desc, date = date, cid = "../channel/" + cid)
+    desc = desc, date = date, cid = "../channel/" + cid, cname = cname)
   curtime = datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S")
   s3 = text("UPDATE watched SET watch_time=:z WHERE user_id=:x AND video_id=:y; \
     INSERT INTO watched (user_id, video_id, watch_time) \
@@ -269,7 +276,20 @@ def channels(userId):
       cdesc = ch["c_description"],cviews = ch["c_view_count"],
       subs = ch["c_sub_count"]))
   cursor.close()
-  context = dict(allch = allch)
+  for ch in allch:
+    s = text("SELECT * FROM thumbnail t where t.t_url in (select ht2.t_url from has_thumb_2 ht2 where c_id = :x)")
+    cursor = g.conn.execute(s,x=ch['cid'])
+    thumbnail = list(cursor)[0]
+    ch['thumb'] = thumbnail['t_url']
+    cursor.close()
+
+  s = text("SELECT * FROM users WHERE user_id = :x")
+  cursor = g.conn.execute(s,x=userId)
+  userobj = list(cursor)[0]
+  username = userobj['username']
+  cursor.close()
+
+  context = dict(username = username, allch = allch)
   return render_template("channels.html", **context)
 
 
@@ -399,7 +419,7 @@ def users(userId):
     cursor.close()
 
   #context = dict(username=username, userid=userId, likevid=likevid, skipvid=skipvid, watvid=watvid)
-  context = dict(username=username, profurl=prof_url, userid=userId, likevideos=likevideos, skipvideos=skipvideos, watvideos=watvideos)
+  context = dict(username=username, profurl=prof_url, userid=userId, likevideos=likevideos, skipvideos=skipvideos, watvideos=watvideos, cid= "../"+str(userId)+"/channel/")
   return render_template("user.html", **context)
 
 
