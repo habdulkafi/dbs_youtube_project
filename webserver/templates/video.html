@@ -10,11 +10,12 @@
 <body>
   <h1>{{title}}</h1>
   {{embhtml|safe}}
-  <div> Likes: {{likes}}</div>
-  <div> Disikes: {{dislikes}} </div>
-  <div> Views: {{views}} </div>
+  <div> <input type="image" src="https://cdn3.iconfinder.com/data/icons/social-icons-5/606/Like.png" alt="Likes" style="width:40px;height:40px;vertical-align:middle" /> {{likes}} </div>
+  <div> <input type="image" src="https://cdn3.iconfinder.com/data/icons/social-icons-5/607/Dislike.png" alt="Dislikes" style="width:40px;height:40px;vertical-align:middle" /> {{dislikes}} </div>
+  <div> <input type="image" src="https://cdn2.iconfinder.com/data/icons/flat-ui-icons-24-px/24/eye-24-128.png" alt="Views" style="width:40px;height:40px;vertical-align:middle" /> {{views}} </div>
   <p> {{desc|safe}} </p>
   <div> {{date}} </div>
+  <p></p>
   <a href={{cid|safe}}>Link to Channel</a>
   <h2>Comments:</h2>
     {% for com in comments %}
