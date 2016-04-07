@@ -186,6 +186,10 @@ def video(videoId):
   embed = vidobj['embed_code']
   numlikes = vidobj['like_count']
   numdislikes = vidobj['dislike_count']
+  views = vidobj["view_count"]
+  desc = vidobj["description"]
+  date = vidobj["date"]
+  cid = vidobj["channel_id"]
   cursor.close()
   s2 = text("SELECT * FROM comment WHERE video_id = :x")
   cursor = g.conn.execute(s2,x=videoId)
@@ -196,19 +200,76 @@ def video(videoId):
     allcomms.append(comdict)
   cursor.close()
 
-
-
-
   context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
-    dislikes = numdislikes,comments = allcomms)
+    dislikes = numdislikes,comments = allcomms,views = views,
+    desc = desc, date = date, cid = "../channel/" + cid)
   return render_template("video.html", **context)
+
+
+
+@app.route('/channel/')
+def channels():
+  s = text("SELECT * FROM channel")
+  cursor = g.conn.execute(s)
+  allch = []
+  for ch in cursor:
+    allch.append(dict(cid =  ch["c_id"],ctitle = ch["c_title"],
+      cdesc = ch["c_description"],cviews = ch["c_view_count"],
+      subs = ch["c_sub_count"]))
+  cursor.close()
+  context = dict(allch = allch)
+  return render_template("channels.html", **context)
+
+
+
+
+
+
+
+
+
+@app.route('/channel/<channelId>')
+def channel(channelId):
+
+  s = text("SELECT * FROM channel WHERE c_id = :x")
+  cursor = g.conn.execute(s,x=channelId)
+  chobj = list(cursor)[0]
+
+  chtitle = chobj['c_title']
+  desc = chobj['c_description']
+  views = chobj['c_view_count']
+  subs = chobj['c_sub_count']
+  cursor.close()
+
+  s2 = text("select * from thumbnail t where t.t_url in (select ht2.t_url from has_thumb_2 ht2 where c_id = :x)" )
+  cursor = g.conn.execute(s2,x=channelId)
+  thumbs = []
+  for thumb in cursor:
+    thumbs.append(thumb['t_url'])
+  cursor.close()
+
+  s3 = text("SELECT SUM(like_count) AS total_likes FROM video v, uploaded_by ub WHERE v.video_id = ub.video_id AND ub.c_id = :x GROUP BY ub.c_id")
+  cursor = g.conn.execute(s3,x=channelId)
+  likes = list(cursor)[0][0]
+  cursor.close()
+
+  s4 = text("select v.video_id, v.title from uploaded_by ub, video v where ub.video_id = v.video_id and ub.c_id = :x order by v.view_count desc limit 5")
+  cursor = g.conn.execute(s4,x=channelId)
+  # top_vids = [i[0] for i in list(cursor)]
+  top_vids = []
+  for vid in cursor:
+    top_vids.append(dict(vid = "../video/" + vid["video_id"],title = vid["title"]))
+  cursor.close()
+  context = dict(title=chtitle,views=views,subs = subs,desc = desc,thumbs = thumbs,likes = likes,top = top_vids )
+  return render_template("channel.html", **context)
+
 
 
 @app.route('/user/<int:userId>')
 def users(userId):
-  print request.args
-  print userId
-  print type(userId)
+  # print request.args
+  # print userId
+  # print type(userId)
   #
   # example of a database query
   #
@@ -226,7 +287,7 @@ def users(userId):
   #   names.append(result['video_id'])  # can also be accessed using result[0]
   username = userobj['username']
   cursor.close()
-  #print username
+  # print username
 
   prof_pic = text("SELECT * FROM prof_pic WHERE user_id = :x")
   cursor = g.conn.execute(prof_pic, x=userId)
@@ -236,9 +297,10 @@ def users(userId):
 
   likes_1 = text("SELECT * FROM likes_1 WHERE user_id = :x")
   cursor = g.conn.execute(likes_1, x=userId)
-  likevidobj = list(cursor)[0]
+  likevidobjs = list(cursor)
   likevid = []
-  likevid.append(likevidobj['video_id'])
+  for likevidobj in likevidobjs:
+    likevid.append(likevidobj['video_id'])
   cursor.close()
   #print likevid
 
@@ -252,9 +314,10 @@ def users(userId):
 
   skips = text("SELECT * FROM skips WHERE user_id = :x")
   cursor = g.conn.execute(skips, x=userId)
-  skipvidobj = list(cursor)[0]
+  skipvidobjs = list(cursor)
   skipvid = []
-  skipvid.append(skipvidobj['video_id'])
+  for skipvidobj in skipvidobjs:
+    skipvid.append(skipvidobj['video_id'])
   cursor.close()
   #print skipvid
 
@@ -268,9 +331,10 @@ def users(userId):
 
   watched = text("SELECT * FROM watched WHERE user_id = :x")
   cursor = g.conn.execute(watched, x=userId)
-  watvidobj = list(cursor)[0]
+  watvidobjs = list(cursor)
   watvid = []
-  watvid.append(watvidobj['video_id'])
+  for watvidobj in watvidobjs:
+    watvid.append(watvidobj['video_id'])
   cursor.close()
   #print watvid
 
@@ -317,8 +381,9 @@ if __name__ == "__main__":
 
     HOST, PORT = host, port
     print "running on %s:%d" % (HOST, PORT)
-    app.debug = True
+    app.debug=True
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
 
   run()
+u

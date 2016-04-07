@@ -272,9 +272,9 @@ def channel(userId, channelId):
 
 @app.route('/<int:userId>/')
 def users(userId):
-  print request.args
-  print userId
-  print type(userId)
+  # print request.args
+  # print userId
+  # print type(userId)
   #
   # example of a database query
   #
@@ -292,7 +292,7 @@ def users(userId):
   #   names.append(result['video_id'])  # can also be accessed using result[0]
   username = userobj['username']
   cursor.close()
-  #print username
+  # print username
 
   prof_pic = text("SELECT * FROM prof_pic WHERE user_id = :x")
   cursor = g.conn.execute(prof_pic, x=userId)
@@ -302,9 +302,10 @@ def users(userId):
 
   likes_1 = text("SELECT * FROM likes_1 WHERE user_id = :x")
   cursor = g.conn.execute(likes_1, x=userId)
-  likevidobj = list(cursor)[0]
+  likevidobjs = list(cursor)
   likevid = []
-  likevid.append(likevidobj['video_id'])
+  for likevidobj in likevidobjs:
+    likevid.append(likevidobj['video_id'])
   cursor.close()
   #print likevid
 
@@ -318,9 +319,10 @@ def users(userId):
 
   skips = text("SELECT * FROM skips WHERE user_id = :x")
   cursor = g.conn.execute(skips, x=userId)
-  skipvidobj = list(cursor)[0]
+  skipvidobjs = list(cursor)
   skipvid = []
-  skipvid.append(skipvidobj['video_id'])
+  for skipvidobj in skipvidobjs:
+    skipvid.append(skipvidobj['video_id'])
   cursor.close()
   #print skipvid
 
@@ -334,9 +336,10 @@ def users(userId):
 
   watched = text("SELECT * FROM watched WHERE user_id = :x")
   cursor = g.conn.execute(watched, x=userId)
-  watvidobj = list(cursor)[0]
+  watvidobjs = list(cursor)
   watvid = []
-  watvid.append(watvidobj['video_id'])
+  for watvidobj in watvidobjs:
+    watvid.append(watvidobj['video_id'])
   cursor.close()
   #print watvid
 
