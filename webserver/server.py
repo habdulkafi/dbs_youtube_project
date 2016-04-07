@@ -18,10 +18,10 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import text
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, send_from_directory
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
-app = Flask(__name__, template_folder=tmpl_dir)
+app = Flask(__name__, template_folder=tmpl_dir,static_url_path='')
 app.debug = True
 # PROPAGATE_EXCEPTIONS = True
 
@@ -115,11 +115,11 @@ def index():
   #
   # example of a database query
   #
-  cursor = g.conn.execute("SELECT name FROM test")
-  names = []
-  for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
-  cursor.close()
+  # cursor = g.conn.execute("SELECT name FROM test")
+  # names = []
+  # for result in cursor:
+    # names.append(result['name'])  # can also be accessed using result[0]
+  # cursor.close()
 
   #
   # Flask uses Jinja templates, which is an extension to HTML where you can
@@ -147,7 +147,7 @@ def index():
   #     <div>{{n}}</div>
   #     {% endfor %}
   #
-  context = dict(data = names)
+  context = dict(data = {})
 
 
   #
@@ -155,6 +155,11 @@ def index():
   # for example, the below file reads template/index.html
   #
   return render_template("index.html", **context)
+
+@app.route('/static/css/<path:path>')
+def send_css(path):
+  return send_from_directory('/static/css',path)
+
 
 #
 # This is an example of a different path.  You can see it at:
@@ -177,8 +182,8 @@ def add():
   return redirect('/')
 
 
-@app.route('/video/<videoId>')
-def video(videoId):
+@app.route('/<userId>/video/<videoId>')
+def video(userId, videoId):
   s = text("SELECT * FROM video WHERE video_id = :x")
   cursor = g.conn.execute(s,x=videoId)
   vidobj = list(cursor)[0]
@@ -207,10 +212,10 @@ def video(videoId):
 
 
 
-@app.route('/channel/')
-def channels():
-  s = text("SELECT * FROM channel")
-  cursor = g.conn.execute(s)
+@app.route('/<userId>/channel/')
+def channels(userId):
+  s = text("SELECT * FROM channel c, subscribes_to st WHERE c.c_id = st.c_id and st.user_id = :x")
+  cursor = g.conn.execute(s,x=userId)
   allch = []
   for ch in cursor:
     allch.append(dict(cid =  ch["c_id"],ctitle = ch["c_title"],
@@ -228,8 +233,8 @@ def channels():
 
 
 
-@app.route('/channel/<channelId>')
-def channel(channelId):
+@app.route('/<userId>/channel/<channelId>')
+def channel(userId, channelId):
 
   s = text("SELECT * FROM channel WHERE c_id = :x")
   cursor = g.conn.execute(s,x=channelId)
@@ -265,7 +270,7 @@ def channel(channelId):
 
 
 
-@app.route('/user/<int:userId>')
+@app.route('/<int:userId>/')
 def users(userId):
   print request.args
   print userId
