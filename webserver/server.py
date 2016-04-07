@@ -19,6 +19,8 @@ from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from sqlalchemy.sql import text
 from flask import Flask, request, render_template, g, redirect, Response, send_from_directory
+from datetime import datetime
+import time
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir,static_url_path='')
@@ -208,7 +210,52 @@ def video(userId, videoId):
   context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
     dislikes = numdislikes,comments = allcomms,views = views,
     desc = desc, date = date, cid = "../channel/" + cid)
+  curtime = datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S")
+  s3 = text("UPDATE watched SET watch_time=:z WHERE user_id=:x AND video_id=:y; \
+    INSERT INTO watched (user_id, video_id, watch_time) \
+    SELECT :x, :y, :z \
+    WHERE NOT EXISTS (SELECT 1 FROM watched WHERE user_id = :x AND video_id = :y)")
+  cursor = g.conn.execute(s3,x=userId,y=videoId,z=curtime)
   return render_template("video.html", **context)
+
+
+@app.route('/<userId>/video/<videoId>/like',methods=['POST'])
+def likevid(userId,videoId):
+  s = text("INSERT INTO likes_1 (user_id, video_id) SELECT :x, :y WHERE NOT EXISTS (SELECT 1 FROM likes_1 WHERE user_id = :x AND video_id = :y)")
+  cursor = g.conn.execute(s,x=userId,y=videoId)
+  return "", 200, {'Content-Type': 'text/plain'}
+
+@app.route('/<userId>/video/<videoId>/skip',methods=['POST'])
+def skipvid(userId,videoId):
+  print userId
+  print videoId
+  s = text("INSERT INTO skips (user_id, video_id) SELECT :x, :y WHERE NOT EXISTS (SELECT 1 FROM skips WHERE user_id = :x AND video_id = :y)")
+  cursor = g.conn.execute(s,x=userId,y=videoId)
+
+  s2 = text("(SELECT v1.video_id, v1.title, v1.dislike_count, v1.like_count, v1.view_count, v1.like_count/(1 + v1.dislike_count) AS ratio \
+FROM uploaded_by ub1, video v1 \
+WHERE v1.video_id = ub1.video_id AND ub1.c_id IN (SELECT st1.c_id \
+FROM subscribes_to st1 \
+WHERE st1.user_id = :x) AND v1.video_id NOT IN \
+  (select watched.video_id from watched where watched.watch_time > (SELECT CURRENT_TIMESTAMP - INTERVAL '1 day') AND watched.user_id = :x)) \
+UNION \
+(SELECT v.video_id, v.title, v.dislike_count, v.like_count, v.view_count, v.like_count/(1 + v.dislike_count) AS ratio \
+FROM likes_2 ub, video v \
+WHERE v.video_id = ub.video_id AND ub.c_id IN (SELECT st.c_id \
+FROM subscribes_to st \
+WHERE st.user_id = :x) AND v.video_id NOT IN \
+  (select watched.video_id from watched where watched.watch_time > (SELECT CURRENT_TIMESTAMP - INTERVAL '1 day') AND watched.user_id = :x)) \
+ORDER BY ratio DESC \
+LIMIT 1;")
+  # print s2
+  cursor = g.conn.execute(s2,x=userId)
+  vidobj = list(cursor)[0]
+  newvidid = vidobj["video_id"]
+  print newvidid
+  return redirect('/' + userId + '/video/' + newvidid)
+  # return "", 200, {'Content-Type': 'text/plain'}
+
+
 
 
 
