@@ -10,6 +10,8 @@
 <body>
   <h1>{{title}}</h1>
   {{embhtml|safe}}
+  <button class="button like" value="like">Like</button>
+  <button class="button skip" value="skip">Skip</button>
   <div> <input type="image" src="https://cdn3.iconfinder.com/data/icons/social-icons-5/606/Like.png" alt="Likes" style="width:40px;height:40px;vertical-align:middle" /> {{likes}} </div>
   <div> <input type="image" src="https://cdn3.iconfinder.com/data/icons/social-icons-5/607/Dislike.png" alt="Dislikes" style="width:40px;height:40px;vertical-align:middle" /> {{dislikes}} </div>
   <div> <input type="image" src="https://cdn2.iconfinder.com/data/icons/flat-ui-icons-24-px/24/eye-24-128.png" alt="Views" style="width:40px;height:40px;vertical-align:middle" /> {{views}} </div>
@@ -25,6 +27,50 @@
 
 
 </body>
+
+
+<script>
+// Only run what comes next *after* the page has loaded
+addEventListener("DOMContentLoaded", function() {
+  // Grab all of the elements with a class of command
+  // (which all of the buttons we just created have)
+  var commandButtons = document.getElementsByClassName("button");
+  for (var i=0, l=commandButtons.length; i<l; i++) {
+    var button = commandButtons[i];
+    // For each button, listen for the "click" event
+    button.addEventListener("click", function(e) {
+      // When a click happens, stop the button
+      // from submitting our form (if we have one)
+      e.preventDefault();
+
+      var clickedButton = e.target;
+      var command = clickedButton.value;
+
+      // Now we need to send the data to our server
+      // without reloading the page - this is the domain of
+      // AJAX (Asynchronous JavaScript And XML)
+      // We will create a new request object
+      // and set up a handler for the response
+      var request = new XMLHttpRequest();
+      request.onload = function() {
+          // We could do more interesting things with the response
+          // or, we could ignore it entirely
+          // alert(request.responseText);
+          if(command == "skip") {
+            console.log(request.responseURL);
+            window.location = request.responseURL;
+        }
+      };
+      // We point the request at the appropriate command
+
+      request.open("POST", "/" + location.pathname.substring(1) + "/" + command, true);
+      // and then we send it off
+      request.send();
+    });
+  }
+}, true);
+</script>
+
 
 
 </html>
