@@ -8,9 +8,10 @@
 
 
 <body>
-  <h1> Channels </h1>
+  <h1> {{username}}'s Channels </h1>
   {% for ch in allch %}
-  <a href={{ch.cid|safe}}>{{ch.ctitle}}</a>
+  <img src={{ch.thumb|safe}} style="width:60px;height:60px;vertical-align:middle"> <a href={{ch.cid|safe}}>{{ch.ctitle}}</a> 
+  <p></p>
   {% endfor %}
 
   <!-- <h1>{{title}}</h1>
