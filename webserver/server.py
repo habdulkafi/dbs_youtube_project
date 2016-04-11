@@ -234,8 +234,8 @@ def likevid(userId,videoId):
 
 @app.route('/<userId>/video/<videoId>/skip',methods=['POST'])
 def skipvid(userId,videoId):
-  print userId
-  print videoId
+  # print userId
+  # print videoId
   s = text("INSERT INTO skips (user_id, video_id) SELECT :x, :y WHERE NOT EXISTS (SELECT 1 FROM skips WHERE user_id = :x AND video_id = :y)")
   cursor = g.conn.execute(s,x=userId,y=videoId)
 
@@ -305,34 +305,38 @@ def channel(userId, channelId):
 
   s = text("SELECT * FROM channel WHERE c_id = :x")
   cursor = g.conn.execute(s,x=channelId)
-  chobj = list(cursor)[0]
+  try:
+    chobj = list(cursor)[0]
 
-  chtitle = chobj['c_title']
-  desc = chobj['c_description']
-  views = chobj['c_view_count']
-  subs = chobj['c_sub_count']
-  cursor.close()
+    chtitle = chobj['c_title']
+    desc = chobj['c_description']
+    views = chobj['c_view_count']
+    subs = chobj['c_sub_count']
+    cursor.close()
 
-  s2 = text("select * from thumbnail t where t.t_url in (select ht2.t_url from has_thumb_2 ht2 where c_id = :x)" )
-  cursor = g.conn.execute(s2,x=channelId)
-  thumbs = []
-  for thumb in cursor:
-    thumbs.append(thumb['t_url'])
-  cursor.close()
+    s2 = text("select * from thumbnail t where t.t_url in (select ht2.t_url from has_thumb_2 ht2 where c_id = :x)" )
+    cursor = g.conn.execute(s2,x=channelId)
+    thumbs = []
+    for thumb in cursor:
+      thumbs.append(thumb['t_url'])
+    cursor.close()
 
-  s3 = text("SELECT SUM(like_count) AS total_likes FROM video v, uploaded_by ub WHERE v.video_id = ub.video_id AND ub.c_id = :x GROUP BY ub.c_id")
-  cursor = g.conn.execute(s3,x=channelId)
-  likes = list(cursor)[0][0]
-  cursor.close()
+    s3 = text("SELECT SUM(like_count) AS total_likes FROM video v, uploaded_by ub WHERE v.video_id = ub.video_id AND ub.c_id = :x GROUP BY ub.c_id")
+    cursor = g.conn.execute(s3,x=channelId)
+    likes = list(cursor)[0][0]
+    cursor.close()
 
-  s4 = text("select v.video_id, v.title from uploaded_by ub, video v where ub.video_id = v.video_id and ub.c_id = :x order by v.view_count desc limit 5")
-  cursor = g.conn.execute(s4,x=channelId)
-  # top_vids = [i[0] for i in list(cursor)]
-  top_vids = []
-  for vid in cursor:
-    top_vids.append(dict(vid = "../video/" + vid["video_id"],title = vid["title"]))
-  cursor.close()
-  context = dict(title=chtitle,views=views,subs = subs,desc = desc,thumbs = thumbs,likes = likes,top = top_vids )
+    s4 = text("select v.video_id, v.title from uploaded_by ub, video v where ub.video_id = v.video_id and ub.c_id = :x order by v.view_count desc limit 5")
+    cursor = g.conn.execute(s4,x=channelId)
+    # top_vids = [i[0] for i in list(cursor)]
+    top_vids = []
+    for vid in cursor:
+      top_vids.append(dict(vid = "../video/" + vid["video_id"],title = vid["title"]))
+    cursor.close()
+    context = dict(title=chtitle,views=views,subs = subs,desc = desc,thumbs = thumbs,likes = likes,top = top_vids )
+  except:
+    context = dict(title='Not Implemented',views=0,subs = 0,desc = '',thumbs = [],likes = 0,top = [] )
+
   return render_template("channel.html", **context)
 
 
