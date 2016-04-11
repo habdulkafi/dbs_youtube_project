@@ -212,7 +212,7 @@ def video(userId, videoId):
     cha = list(cursor)[0]
     cname = cha['c_title']
   except IndexError:
-    cname = []
+    cname = cid
 
   context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
     dislikes = numdislikes,comments = allcomms,views = views,
