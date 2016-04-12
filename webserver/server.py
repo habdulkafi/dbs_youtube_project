@@ -23,7 +23,7 @@ from datetime import datetime
 import time
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
-app = Flask(__name__, template_folder=tmpl_dir,static_url_path='')
+app = Flask(__name__, template_folder=tmpl_dir,static_url_path='',static_folder='static')
 app.debug = True
 # PROPAGATE_EXCEPTIONS = True
 
@@ -158,9 +158,10 @@ def index():
   #
   return render_template("index.html", **context)
 
-@app.route('/static/css/<path:path>')
-def send_css(path):
-  return send_from_directory('/static/css',path)
+@app.route('/static/css/<path:filename>')
+def send_css(filename):
+  print "ellsd"
+  return send_from_directory('static/css/',filename)
 
 
 #
