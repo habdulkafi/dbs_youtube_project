@@ -17,6 +17,7 @@
 
 
 <body>
+
   <h1>{{title}}</h1>
   {{embhtml|safe}}
   <p></p>
@@ -31,12 +32,19 @@
   <div> {{date}} </div>
   <p></p>
   <a href={{cid|safe}}><img src="https://cdn1.iconfinder.com/data/icons/folders-3/96/Folder-Video-512.png" alt="Channel" style="width:30px;height:30px;vertical-align:middle"> {{cname}}</a>
+
+  <h2>Suggested Videos:</h2>
+    {% for sug in suggested %}
+    <a href={{sug.vid|safe}} title={{sug.title|safe}}>
+<img border="0" src={{sug.thumb|safe}}  width="177" height="100"></a>
+    {% endfor %}
+
+
   <h2>Comments:</h2>
     {% for com in comments %}
     <b>{{com.name}}</b> {{com.date}} Likes: {{com.likes}}
     <div>{{com.text|safe}}</div>
     {% endfor %}
-
 
 </body>
 

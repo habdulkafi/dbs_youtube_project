@@ -85,106 +85,34 @@ def teardown_request(exception):
     pass
 
 
-#
-# @app.route is a decorator around index() that means:
-#   run index() whenever the user tries to access the "/" path using a GET request
-#
-# If you wanted the user to go to, for example, localhost:8111/foobar/ with POST or GET then you could use:
-#
-#       @app.route("/foobar/", methods=["POST", "GET"])
-#
-# PROTIP: (the trailing / in the path is important)
-# 
-# see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
-# see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
-#
+# Front page of the webpage.  Gets all the users from the db and displays them
 @app.route('/')
 def index():
-  """
-  request is a special object that Flask provides to access web request information:
+  s = text("SELECT * FROM users")
+  cursor = g.conn.execute(s)
+  users = list(cursor)
+  allusers = []
+  for user in users:
+    userdict = dict(name=user[1],userid=user[0])
+    allusers.append(userdict)
+  context = dict(allusers = allusers)
 
-  request.method:   "GET" or "POST"
-  request.form:     if the browser submitted a form, this contains the data in the form
-  request.args:     dictionary of URL arguments, e.g., {a:1, b:2} for http://localhost?a=1&b=2
-
-  See its API: http://flask.pocoo.org/docs/0.10/api/#incoming-request-data
-  """
-
-  # DEBUG: this is debugging code to see what request looks like
-  print request.args
-
-
-  #
-  # example of a database query
-  #
-  # cursor = g.conn.execute("SELECT name FROM test")
-  # names = []
-  # for result in cursor:
-    # names.append(result['name'])  # can also be accessed using result[0]
-  # cursor.close()
-
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  context = dict(data = {})
-
-
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
   return render_template("index.html", **context)
 
+
+# routing for static files like the bootstrap css file we use
 @app.route('/static/css/<path:filename>')
 def send_css(filename):
-  print "ellsd"
   return send_from_directory('static/css/',filename)
 
 
-#
-# This is an example of a different path.  You can see it at:
-# 
-#     localhost:8111/another
-#
-# Notice that the function name is another() rather than index()
-# The functions for each app.route need to have different names
-#
-@app.route('/another')
-def another():
-  return render_template("another.html")
 
-
-# Example of adding new data to the database
-@app.route('/add', methods=['POST'])
-def add():
-  name = request.form['name']
-  g.conn.execute('INSERT INTO test VALUES (NULL, ?)', name)
-  return redirect('/')
-
-
+# Route for the video page.  Give userId and videoId, multiple things happen:
+#   * gets the video from the db
+#   * gets the comments for that video
+#   * trys to get the name of the channel from the db if we're tracking it
+#   * updates the watched table for the user recording when the user watched the video
+#   * sends all the user info to the browser
 @app.route('/<userId>/video/<videoId>')
 def video(userId, videoId):
   s = text("SELECT * FROM video WHERE video_id = :x")
@@ -215,58 +143,107 @@ def video(userId, videoId):
   except IndexError:
     cname = cid
 
-  context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
-    dislikes = numdislikes,comments = allcomms,views = views,
-    desc = desc, date = date, cid = "../channel/" + cid, cname = cname)
   curtime = datetime.strftime(datetime.now(),"%Y-%m-%d %H:%M:%S")
   s3 = text("UPDATE watched SET watch_time=:z WHERE user_id=:x AND video_id=:y; \
     INSERT INTO watched (user_id, video_id, watch_time) \
     SELECT :x, :y, :z \
     WHERE NOT EXISTS (SELECT 1 FROM watched WHERE user_id = :x AND video_id = :y)")
   cursor = g.conn.execute(s3,x=userId,y=videoId,z=curtime)
+
+  s5 = text("(SELECT v1.video_id, v1.title, v1.dislike_count, v1.like_count, v1.view_count, v1.like_count/(1 + v1.dislike_count) AS ratio \
+  FROM uploaded_by ub1, video v1 \
+  WHERE v1.video_id = ub1.video_id AND ub1.c_id IN (SELECT st1.c_id \
+  FROM subscribes_to st1 \
+  WHERE st1.user_id = :x) AND v1.video_id NOT IN \
+  (select watched.video_id from watched where watched.watch_time > (SELECT CURRENT_TIMESTAMP - INTERVAL '1 day') AND watched.user_id = :x)\
+  AND v1.video_id NOT IN (SELECT skips.video_id FROM skips WHERE skips.user_id = :x)) \
+UNION \
+(SELECT v.video_id, v.title, v.dislike_count, v.like_count, v.view_count, v.like_count/(1 + v.dislike_count) AS ratio \
+  FROM likes_2 ub, video v \
+  WHERE v.video_id = ub.video_id AND ub.c_id IN (SELECT st.c_id \
+  FROM subscribes_to st \
+  WHERE st.user_id = :x) AND v.video_id NOT IN \
+  (select watched.video_id from watched where watched.watch_time > (SELECT CURRENT_TIMESTAMP - INTERVAL '1 day') AND watched.user_id = :x)\
+  AND v.video_id NOT IN (SELECT skips.video_id FROM skips WHERE skips.user_id = :x)) \
+ORDER BY ratio DESC \
+LIMIT 5;")
+  cursor = g.conn.execute(s5,x=userId)
+  suggested = []
+  # a = list(cursor)
+  # print a
+  for sugvid in cursor:
+    s6 = text("SELECT t.t_url FROM has_thumb_1 ht1, thumbnail t WHERE t.t_url = ht1.t_url AND ht1.video_id=:x ORDER BY t.t_width DESC")
+    c2 = g.conn.execute(s6,x=str(sugvid["video_id"]))
+    # print list(c2)
+    vidth = dict(title = '"' + sugvid["title"] + '"', vid = sugvid["video_id"], thumb = list(c2)[0][0])
+    # print vidth
+    suggested.append(vidth)
+
+
+
+
+
+
+  context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
+    dislikes = numdislikes,comments = allcomms,views = views,
+    desc = desc, date = date, cid = "../channel/" + cid, cname = cname, suggested = suggested)
+  
   return render_template("video.html", **context)
 
 
+
+# This route is for when a user presses the "like" button on a video.
+# It inserts into the likes table the userId and video
+# This page is never rendered in the browser, it happens using jquery (I think)
 @app.route('/<userId>/video/<videoId>/like',methods=['POST'])
 def likevid(userId,videoId):
   s = text("INSERT INTO likes_1 (user_id, video_id) SELECT :x, :y WHERE NOT EXISTS (SELECT 1 FROM likes_1 WHERE user_id = :x AND video_id = :y)")
   cursor = g.conn.execute(s,x=userId,y=videoId)
   return "", 200, {'Content-Type': 'text/plain'}
 
+
+# This is route for when the user presses the "skip" button on a video
+# It inserts into the skips table the userId and video
+# Then it goes on the interesting query
+# Basically it does the following steps:
+#   * Gets all the channels the user subscribes to
+#   * From each of those channels, it gets the videos uploaded by the channel and liked by the channel
+#   * Then, it removes the videos that were watched by the user in the past day
+#   * Then, it removes the videos skipped previously by the user
+#   * Then, it orders all these videos by the ratio of likes to dislikes 
+#   * Finally, it limits it to just one video
+# At the end of this route, it redirects the browser to this top video that the query got
 @app.route('/<userId>/video/<videoId>/skip',methods=['POST'])
 def skipvid(userId,videoId):
-  # print userId
-  # print videoId
   s = text("INSERT INTO skips (user_id, video_id) SELECT :x, :y WHERE NOT EXISTS (SELECT 1 FROM skips WHERE user_id = :x AND video_id = :y)")
   cursor = g.conn.execute(s,x=userId,y=videoId)
 
   s2 = text("(SELECT v1.video_id, v1.title, v1.dislike_count, v1.like_count, v1.view_count, v1.like_count/(1 + v1.dislike_count) AS ratio \
-FROM uploaded_by ub1, video v1 \
-WHERE v1.video_id = ub1.video_id AND ub1.c_id IN (SELECT st1.c_id \
-FROM subscribes_to st1 \
-WHERE st1.user_id = :x) AND v1.video_id NOT IN \
-  (select watched.video_id from watched where watched.watch_time > (SELECT CURRENT_TIMESTAMP - INTERVAL '1 day') AND watched.user_id = :x)) \
+  FROM uploaded_by ub1, video v1 \
+  WHERE v1.video_id = ub1.video_id AND ub1.c_id IN (SELECT st1.c_id \
+  FROM subscribes_to st1 \
+  WHERE st1.user_id = :x) AND v1.video_id NOT IN \
+  (select watched.video_id from watched where watched.watch_time > (SELECT CURRENT_TIMESTAMP - INTERVAL '1 day') AND watched.user_id = :x)\
+  AND v1.video_id NOT IN (SELECT skips.video_id FROM skips WHERE skips.user_id = :x)) \
 UNION \
 (SELECT v.video_id, v.title, v.dislike_count, v.like_count, v.view_count, v.like_count/(1 + v.dislike_count) AS ratio \
-FROM likes_2 ub, video v \
-WHERE v.video_id = ub.video_id AND ub.c_id IN (SELECT st.c_id \
-FROM subscribes_to st \
-WHERE st.user_id = :x) AND v.video_id NOT IN \
-  (select watched.video_id from watched where watched.watch_time > (SELECT CURRENT_TIMESTAMP - INTERVAL '1 day') AND watched.user_id = :x)) \
+  FROM likes_2 ub, video v \
+  WHERE v.video_id = ub.video_id AND ub.c_id IN (SELECT st.c_id \
+  FROM subscribes_to st \
+  WHERE st.user_id = :x) AND v.video_id NOT IN \
+  (select watched.video_id from watched where watched.watch_time > (SELECT CURRENT_TIMESTAMP - INTERVAL '1 day') AND watched.user_id = :x)\
+  AND v.video_id NOT IN (SELECT skips.video_id FROM skips WHERE skips.user_id = :x)) \
 ORDER BY ratio DESC \
 LIMIT 1;")
-  # print s2
   cursor = g.conn.execute(s2,x=userId)
   vidobj = list(cursor)[0]
   newvidid = vidobj["video_id"]
-  print newvidid
   return redirect('/' + userId + '/video/' + newvidid)
-  # return "", 200, {'Content-Type': 'text/plain'}
 
 
 
 
-
+# This is a route for listing the channels a user subscribes to.
 @app.route('/<userId>/channel/')
 def channels(userId):
   s = text("SELECT * FROM channel c, subscribes_to st WHERE c.c_id = st.c_id and st.user_id = :x")
@@ -296,11 +273,8 @@ def channels(userId):
 
 
 
-
-
-
-
-
+# This route is to render a specific channel's information
+# If we're not tracking this channel, it just returns "Not Implemented"
 @app.route('/<userId>/channel/<channelId>')
 def channel(userId, channelId):
 
@@ -342,29 +316,19 @@ def channel(userId, channelId):
 
 
 
+# This route renders the user's homepage
+# It gets the profile pic of the user
+# It gets the videos liked by the user
+# It gets the videos skipped by the user
+# It gets the videos watched by the user
+# Then it sends that info to the template
 @app.route('/<int:userId>/')
 def users(userId):
-  # print request.args
-  # print userId
-  # print type(userId)
-  #
-  # example of a database query
-  #
-  # cursor = g.conn.execute("SELECT name FROM test")
-  # try:  
-  # cursor = g.conn.execute("SELECT * FROM video WHERE video_id = '3dhKRWB1_IA'")
-  # cursor = g.conn.execute("SELECT * FROM video WHERE video_id = '{0}'".format(videoId))
-  # print "SELECT * FROM video WHERE video_id = '{0}'".format(videoId)
-  # cursor = g.conn.execute("SELECT * FROM video limit 5")
   s = text("SELECT * FROM users WHERE user_id = :x")
   cursor = g.conn.execute(s,x=userId)
   userobj = list(cursor)[0]
-  # print "197"
-  # for result in cursor:
-  #   names.append(result['video_id'])  # can also be accessed using result[0]
   username = userobj['username']
   cursor.close()
-  # print username
 
   prof_pic = text("SELECT * FROM prof_pic WHERE user_id = :x")
   cursor = g.conn.execute(prof_pic, x=userId)
@@ -379,7 +343,6 @@ def users(userId):
   for likevidobj in likevidobjs:
     likevid.append(likevidobj['video_id'])
   cursor.close()
-  #print likevid
 
   likevideos = []
   for vid in likevid:
@@ -396,7 +359,6 @@ def users(userId):
   for skipvidobj in skipvidobjs:
     skipvid.append(skipvidobj['video_id'])
   cursor.close()
-  #print skipvid
 
   skipvideos = []
   for vid in skipvid:
@@ -413,7 +375,6 @@ def users(userId):
   for watvidobj in watvidobjs:
     watvid.append(watvidobj['video_id'])
   cursor.close()
-  #print watvid
 
   watvideos = []
   for vid in watvid:
@@ -423,16 +384,10 @@ def users(userId):
     watvideos.append(dict(vid = "video/" + vid, title = wat_vtabobj['title']))
     cursor.close()
 
-  #context = dict(username=username, userid=userId, likevid=likevid, skipvid=skipvid, watvid=watvid)
   context = dict(username=username, profurl=prof_url, userid=userId, likevideos=likevideos, skipvideos=skipvideos, watvideos=watvideos, cid= "../"+str(userId)+"/channel/")
   return render_template("user.html", **context)
 
 
-
-@app.route('/login')
-def login():
-    abort(401)
-    this_is_never_executed()
 
 
 if __name__ == "__main__":
