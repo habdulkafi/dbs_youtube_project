@@ -21,6 +21,7 @@ from sqlalchemy.sql import text
 from flask import Flask, request, render_template, g, redirect, Response, send_from_directory
 from datetime import datetime
 import time
+import string
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir,static_url_path='',static_folder='static')
@@ -50,11 +51,11 @@ engine = create_engine(DATABASEURI)
 # Example of running queries in your database
 # Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. This is only an example showing you how to run queries in your database using SQLAlchemy.
 #
-engine.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
-);""")
-engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
+# engine.execute("""CREATE TABLE IF NOT EXISTS test (
+#   id serial,
+#   name text
+# );""")
+# engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 
 
 @app.before_request
@@ -113,7 +114,7 @@ def send_css(filename):
 #   * trys to get the name of the channel from the db if we're tracking it
 #   * updates the watched table for the user recording when the user watched the video
 #   * sends all the user info to the browser
-@app.route('/<userId>/video/<videoId>')
+@app.route('/<userId>/video/<videoId>/')
 def video(userId, videoId):
   s = text("SELECT * FROM video WHERE video_id = :x")
   cursor = g.conn.execute(s,x=videoId)
@@ -175,7 +176,7 @@ LIMIT 5;")
     s6 = text("SELECT t.t_url FROM has_thumb_1 ht1, thumbnail t WHERE t.t_url = ht1.t_url AND ht1.video_id=:x ORDER BY t.t_width DESC")
     c2 = g.conn.execute(s6,x=str(sugvid["video_id"]))
     # print list(c2)
-    vidth = dict(title = '"' + sugvid["title"] + '"', vid = sugvid["video_id"], thumb = list(c2)[0][0])
+    vidth = dict(title = '"' + sugvid["title"] + '"', vid = '../' + sugvid["video_id"], thumb = list(c2)[0][0])
     # print vidth
     suggested.append(vidth)
 
@@ -186,9 +187,36 @@ LIMIT 5;")
 
   context = dict(title=vidtitle,embhtml=embed,likes=numlikes,
     dislikes = numdislikes,comments = allcomms,views = views,
-    desc = desc, date = date, cid = "../channel/" + cid, cname = cname, suggested = suggested)
+    desc = desc, date = date, cid = "../../channel/" + cid, cname = cname, suggested = suggested)
   
   return render_template("video.html", **context)
+
+
+
+@app.route('/<userId>/video/<videoId>/add_comment', methods=['POST'])
+def add_comment(userId, videoId):
+    print videoId
+    s = text("INSERT INTO comment (com_id,video_id,text,com_date,display_name,profile_img,like_count) VALUES (:a,:b,:c,:d,:e,:f,:g)")
+    comid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(34))
+    comment = request.form['comment']
+    comdate = datetime.strftime(datetime.now().date(),"%Y-%m-%d")
+    
+    s2 = text("SELECT * FROM users WHERE user_id = :x")
+    cursor = g.conn.execute(s2, x=userId)
+    displayname = list(cursor)[0]['username']
+    cursor.close()
+    
+    s3 = text("SELECT * FROM prof_pic WHERE user_id = :x")
+    cursor = g.conn.execute(s3, x=userId)
+    profimg = list(cursor)[0]['t_url']
+    cursor.close()
+
+    likecount = '0'
+
+    cursor = g.conn.execute(s,a=comid,b=videoId,c=comment,d=comdate,e=displayname,f=profimg,g=likecount)
+    # g.db.execute('INSERT INTO comment (com_id,video_id,text,com_date,display_name,profile_img,like_count) values (?,?,?,?,?,?,?)',
+    #              [request.form['title'], request.form['text']])
+    return redirect('/' + userId + '/video/' + videoId)
 
 
 
@@ -199,6 +227,12 @@ LIMIT 5;")
 def likevid(userId,videoId):
   s = text("INSERT INTO likes_1 (user_id, video_id) SELECT :x, :y WHERE NOT EXISTS (SELECT 1 FROM likes_1 WHERE user_id = :x AND video_id = :y)")
   cursor = g.conn.execute(s,x=userId,y=videoId)
+  s1 = text("SELECT v.like_count FROM video v WHERE v.video_id = :x")
+  cursor = g.conn.execute(s1,x=videoId)
+  likes = list(cursor)[0][0] + 1
+  # print type(likes)
+  s2 = text("UPDATE video SET like_count = :y where video_id = :x")
+  cursor = g.conn.execute(s2,x=videoId,y=likes)
   return "", 200, {'Content-Type': 'text/plain'}
 
 
@@ -238,6 +272,13 @@ LIMIT 1;")
   cursor = g.conn.execute(s2,x=userId)
   vidobj = list(cursor)[0]
   newvidid = vidobj["video_id"]
+  s3 = text("SELECT v.dislike_count FROM video v WHERE v.video_id = :x")
+  cursor = g.conn.execute(s3,x=videoId)
+  dislikes = list(cursor)[0][0] + 1
+  # print type(likes)
+  s4 = text("UPDATE video SET dislike_count = :y where video_id = :x")
+  cursor = g.conn.execute(s4,x=videoId,y=dislikes)
+
   return redirect('/' + userId + '/video/' + newvidid)
 
 
@@ -386,6 +427,32 @@ def users(userId):
 
   context = dict(username=username, profurl=prof_url, userid=userId, likevideos=likevideos, skipvideos=skipvideos, watvideos=watvideos, cid= "../"+str(userId)+"/channel/")
   return render_template("user.html", **context)
+
+
+@app.route('/<int:userId>/search/<searchtext>')
+def search(userId,searchtext):
+  print searchtext
+  alllower = searchtext.lower()
+  titles = alllower.title()
+  s = text("SELECT * FROM video WHERE video.title LIKE :x OR video.title LIKE :y \
+    OR video.description LIKE :x OR video.description LIKE :y")
+  cursor = g.conn.execute(s,x='%' + alllower + '%',y='%' + titles + '%')
+  # for vid in cursor:
+    # print vid
+  searchresults = []
+  for vidobj in cursor:
+    vidtitle = vidobj['title']
+    vidid = '/' + str(userId) + '/video/' + vidobj['video_id']
+    searchresults.append(dict(title=vidtitle,vidid = vidid))
+  print searchresults
+  context = dict(results=searchresults)
+  return render_template("search.html", **context)
+
+
+  # return "", 200, {'Content-Type': 'text/plain'}
+
+
+
 
 
 

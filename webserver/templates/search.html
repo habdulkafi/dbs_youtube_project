@@ -1,0 +1,28 @@
+<html>
+<head>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+<body>
+  <h1 align="center">Search Results</h1>
+
+  <div>
+    {% for vid in results %}
+      <a href={{vid.vidid|safe}}><h2 align="center">{{vid.title}}</h2></a> <p></p>
+    {% endfor %}
+  </div>
+
+
+
+
+
+</body>
+
+
+</html>

@@ -12,7 +12,10 @@
   <h1> <img src={{profurl|safe}} style="width:100px;height:100px;vertical-align:middle"> {{username}} </h1>
   <div>User ID: {{userid}}</div>
   <br>
-  
+  <input id="subbox" type="text" onkeypress="clickthis(event, this)" placeholder="Search..." required>
+  <input id="searchbutton" type="button" onclick="searchthis()" value="Search">
+  <p>
+  </p>
   <a href={{cid|safe}}> <img src="https://cdn3.iconfinder.com/data/icons/picons-social/57/20-rss-256.png" alt="Subscribes" style="width:38px;height:38px;vertical-align:middle">Channels</a>
   <p></p>
 
@@ -33,17 +36,6 @@
   <a href={{vid.vid|safe}}>{{vid.title}}</a> <br>
   {% endfor %}
 
-<!--   <div>
-    {% for n in data %}
-    <div>{{n}}</div>
-    {% endfor %}
-  </div> -->
-
-<!-- <p><a href="another.html">Go to the other page</a></p> -->
-
-<!-- <form method="POST" action="/add">
-<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-</form> -->
 
 </body>
 
@@ -51,6 +43,26 @@
 <font color="red">just for fun</font>
 </td></tr></table>
 <script>
+
+var searchthis = function() {
+    var search = document.getElementById('subbox').value;
+    console.log(search);
+    var searchEncoded = encodeURIComponent(search);
+    if(search != "") {
+      window.location = "search/" + searchEncoded;
+    }
+}
+var clickthis = function(e,search) {
+  if (e.keyCode == 13) {
+    var searchEncoded = encodeURIComponent(search.value);
+    if(search.value != "") {
+      window.location = "search/" + searchEncoded;
+    }
+  }
+}
+
+
+
 function f1(){
   var util=(function(){
   var a={};
