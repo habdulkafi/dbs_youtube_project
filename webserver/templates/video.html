@@ -36,7 +36,7 @@
   <h2>Suggested Videos:</h2>
     {% for sug in suggested %}
     <a href={{sug.vid|safe}} title={{sug.title|safe}}>
-<img border="0" src={{sug.thumb|safe}}  width="177" height="100"></a>
+  <img border="0" src={{sug.thumb|safe}}  width="177" height="100"></a>
     {% endfor %}
 
 
@@ -45,6 +45,11 @@
     <b>{{com.name}}</b> {{com.date}} Likes: {{com.likes}}
     <div>{{com.text|safe}}</div>
     {% endfor %}
+
+  <form action="add_comment" method="post">
+    <textarea placeholder="Enter your comment here" name="comment" cols="50" rows="4"></textarea>
+    <input type="submit" value="Submit">
+  </form>
 
 </body>
 
@@ -79,11 +84,15 @@ addEventListener("DOMContentLoaded", function() {
           if(command == "skip") {
             console.log(request.responseURL);
             window.location = request.responseURL;
+          if(command == "submit") {
+            console.log(request.responseURL);
+            window.location = request.responseURL;
+          }
         }
       };
       // We point the request at the appropriate command
 
-      request.open("POST", "/" + location.pathname.substring(1) + "/" + command, true);
+      request.open("POST", command, true);
       // and then we send it off
       request.send();
     });
