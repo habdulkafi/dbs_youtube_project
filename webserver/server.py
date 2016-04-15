@@ -196,7 +196,7 @@ LIMIT 5;")
 
 @app.route('/<userId>/video/<videoId>/add_comment', methods=['POST'])
 def add_comment(userId, videoId):
-    print videoId
+    # print videoId
     s = text("INSERT INTO comment (com_id,video_id,text,com_date,display_name,profile_img,like_count) VALUES (:a,:b,:c,:d,:e,:f,:g)")
     comid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(34))
     comment = request.form['comment']
@@ -432,7 +432,7 @@ def users(userId):
 
 @app.route('/<int:userId>/search/<searchtext>')
 def search(userId,searchtext):
-  print searchtext
+  # print searchtext
   alllower = searchtext.lower()
   titles = alllower.title()
   s = text("SELECT * FROM video WHERE video.title LIKE :x OR video.title LIKE :y \
@@ -445,7 +445,7 @@ def search(userId,searchtext):
     vidtitle = vidobj['title']
     vidid = '/' + str(userId) + '/video/' + vidobj['video_id']
     searchresults.append(dict(title=vidtitle,vidid = vidid))
-  print searchresults
+  # print searchresults
   context = dict(results=searchresults)
   return render_template("search.html", **context)
 
