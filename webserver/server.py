@@ -182,7 +182,8 @@ LIMIT 5;")
     suggested.append(vidth)
 
 
-
+  s6 = text("UPDATE video SET view_count = :y where video_id = :x")
+  cursor = g.conn.execute(s6,x=videoId,y=views+1)
 
 
 
@@ -436,8 +437,10 @@ def search(userId,searchtext):
   alllower = searchtext.lower()
   titles = alllower.title()
   s = text("SELECT * FROM video WHERE video.title LIKE :x OR video.title LIKE :y \
-    OR video.description LIKE :x OR video.description LIKE :y")
-  cursor = g.conn.execute(s,x='%' + alllower + '%',y='%' + titles + '%')
+    OR video.title LIKE :z \
+    OR video.description LIKE :x OR video.description LIKE :y \
+    OR video.description LIKE :z")
+  cursor = g.conn.execute(s,x='%' + alllower + '%',y='%' + titles + '%',z='%' + searchtext + '%')
   # for vid in cursor:
     # print vid
   searchresults = []
