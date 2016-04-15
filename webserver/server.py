@@ -433,27 +433,19 @@ def users(userId):
 
 @app.route('/<int:userId>/search/<searchtext>')
 def search(userId,searchtext):
-  # print searchtext
   alllower = searchtext.lower()
-  titles = alllower.title()
-  s = text("SELECT * FROM video WHERE video.title LIKE :x OR video.title LIKE :y \
-    OR video.title LIKE :z \
-    OR video.description LIKE :x OR video.description LIKE :y \
-    OR video.description LIKE :z")
-  cursor = g.conn.execute(s,x='%' + alllower + '%',y='%' + titles + '%',z='%' + searchtext + '%')
-  # for vid in cursor:
-    # print vid
+  s = text("SELECT * FROM video WHERE LOWER(video.title) LIKE :x \
+    OR LOWER(video.description) LIKE :x")
+  cursor = g.conn.execute(s,x='%' + alllower + '%')
   searchresults = []
   for vidobj in cursor:
     vidtitle = vidobj['title']
     vidid = '/' + str(userId) + '/video/' + vidobj['video_id']
     searchresults.append(dict(title=vidtitle,vidid = vidid))
-  # print searchresults
   context = dict(results=searchresults)
   return render_template("search.html", **context)
 
 
-  # return "", 200, {'Content-Type': 'text/plain'}
 
 
 
