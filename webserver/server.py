@@ -22,6 +22,7 @@ from flask import Flask, request, render_template, g, redirect, Response, send_f
 from datetime import datetime
 import time
 import string
+import random
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir,static_url_path='',static_folder='static')
