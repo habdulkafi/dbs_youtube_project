@@ -438,7 +438,8 @@ def users(userId):
 
 @app.route('/<int:userId>/search/<searchtext>')
 def search(userId,searchtext):
-  alllower = searchtext.lower()
+  # alllower = searchtext.lower()
+  alllower = " ".join(searchtext.split()).replace(' ',' & ')
   # s = text("SELECT * FROM video WHERE LOWER(video.title) LIKE :x \
   #   OR LOWER(video.description) LIKE :x")
   s = text("SELECT * FROM video where to_tsvector(description) @@ to_tsquery(:x) \
