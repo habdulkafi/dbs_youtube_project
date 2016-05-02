@@ -150,7 +150,7 @@ def video(userId, videoId):
   #   INSERT INTO watched (user_id, video_id, watch_time) \
   #   SELECT :x, :y, :z \
   #   WHERE NOT EXISTS (SELECT 1 FROM watched WHERE user_id = :x AND video_id = :y)")
-  s3 = text("UPDATE watched SET watch_time=:z WHERE user_id=:x AND video_id=:y; \
+  s3 = text("UPDATE watched SET watch_time= watch_time || :z WHERE user_id=:x AND video_id=:y; \
     INSERT INTO watched (user_id, video_id, watch_time) \
     SELECT :x, :y, :z \
     WHERE NOT EXISTS (SELECT 1 FROM watched WHERE user_id = :x AND video_id = :y)")
